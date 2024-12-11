@@ -76,6 +76,20 @@ class Hero(GameEntity):
     def apply_super_power(self, boss, heroes):
         pass
 
+class Witcher(Hero):
+    def __init__(self, name, health, damage, ):
+        super().__init__(name, health, 0, 'REVIVE')
+        self.revived = False
+
+    def apply_super_power(self, boss, heroes):
+        if not self.revived and any(hero.health <= 0 for hero in heroes):
+            fallen_heroes = [hero for hero in heroes if hero.health <= 0]
+            hero_to_revive = fallen_heroes[0]
+            hero_to_revive.health = self.health
+            self.health = 0
+            self.revived = True
+            print(f"Witcher {self.name} revived {hero_to_revive.name}!")
+
 
 class Warrior(Hero):
     def __init__(self, name, health, damage):
@@ -91,20 +105,40 @@ class Magic(Hero):
     def __init__(self, name, health, damage):
         super().__init__(name, health, damage, 'BOOST')
 
-    def apply_super_power(self, boss, heroes):
-        # TODO Implementation of BOOST ability
-        pass
-
+    def apply_power(self, boss, heroes):
+        if self.boost_rounds_left > 0:
+            for hero in heroes:
+                if hero is not self and hero.health > 0:
+                    hero.damage += self.boost_amount
+                    print(f"Magic {self.name} boosted {hero.name}'s damage by {self.boost_amount}!")
+            self.boost_rounds_left -= 1
 
 class Medic(Hero):
     def __init__(self, name, health, damage, heal_points):
         super().__init__(name, health, damage, 'HEAL')
         self.__heal_points = heal_points
 
+
     def apply_super_power(self, boss, heroes):
         for hero in heroes:
             if hero.health > 0 and self != hero:
                 hero.health += self.__heal_points
+
+
+class Hacker(Hero):
+    def __init__(self, name, health, damage):
+        super().__init__(name, health, damage, 'STEAL')
+
+    def apply_power(self, boss, heroes):
+        if boss.health > 0:
+            stolen_health = min(boss.health, self.ability)
+            boss.health -= stolen_health
+            if heroes:
+                hero_to_heal = choice(heroes)
+                hero_to_heal.health += stolen_health
+                print(f"Hacker {self.name} stole {stolen_health} health from the boss and gave it to {hero_to_heal.name}!")
+            else:
+              print(f"Hacker {self.name} stole {stolen_health} health, but there are no heroes to give it to!")
 
 
 class Berserk(Hero):
@@ -170,12 +204,13 @@ def start_game():
     doc = Medic('Merlin', 250, 5, 15)
     assistant = Medic('Florin', 300, 5, 5)
     berserk = Berserk('Guts', 260, 10)
+    witcher = Witcher('RYENA', 300, 10)
+    hacker = Hacker('lilus', 300, 10)
 
-    heroes_list = [warrior_1, warrior_2, magic, doc, assistant, berserk]
+    heroes_list = [warrior_1, warrior_2, magic, doc, assistant, berserk,witcher,hacker ]
 
     show_statistics(boss, heroes_list)
     while not is_game_over(boss, heroes_list):
         play_round(boss, heroes_list)
-
 
 start_game()
